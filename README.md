@@ -19,6 +19,7 @@
 - requests
 - python-dotenv
 - pytest
+- mypy, black, isort, flake8
 
 ## Структура проекта
 
@@ -32,8 +33,9 @@
 - `tests/` — автоматические тесты.
 - `data/` — исходные данные.
 - `user_settings.json` — настройки валют и акций.
+- `.env_template` — шаблон конфигурации для API-ключа.
 
-## Установка и запуск
+## Установка и настройка
 
 1. Установите Python 3.12 и Poetry.
 2. Установите зависимости:
@@ -48,11 +50,67 @@
    ALPHA_VANTAGE_API_KEY=ваш_ключ
    ```
 
-4. Запустите тесты:
+4. Проверьте, что файл `data/operations.xlsx` существует и содержит данные транзакций.
 
-   ```bash
-   poetry run pytest
-   ```
+## Использование функций проекта
+
+Функции проекта можно вызывать из Python-кода.
+
+### Загрузка транзакций и формирование главной страницы
+
+```python
+from datetime import datetime
+
+from src.main import main
+from src.utils import load_transactions
+
+transactions = load_transactions("data/operations.xlsx")
+
+result = main(
+    "2021-12-31 23:59:59",
+    transactions,
+)
+
+print(result)
+```
+
+Для получения курсов валют и котировок акций необходим действующий API-ключ и доступ к внешним сервисам.
+
+### Поиск транзакций
+
+```python
+from src.services import simple_search
+from src.utils import load_transactions
+
+transactions = load_transactions("data/operations.xlsx")
+
+result = simple_search("супермаркеты", transactions)
+print(result)
+```
+
+### Формирование отчёта по категории
+
+```python
+from src.reports import spending_by_category
+from src.utils import load_transactions
+
+transactions = load_transactions("data/operations.xlsx")
+
+result = spending_by_category(
+    transactions,
+    "Супермаркеты",
+)
+
+print(result)
+```
+
+Результат отчёта сохраняется в JSON с помощью декоратора.
+
+## Запуск тестов
+
+```bash
+poetry run pytest
+```
 
 ## Проверки качества кода
 
@@ -63,8 +121,10 @@ poetry run isort --check-only src tests
 poetry run flake8 src tests
 ```
 
-## Конфигурация
+## Конфигурация и ограничения API
 
 В `user_settings.json` указываются валюты и тикеры акций, которые необходимо получать через API.
+
+Внешние API могут ограничивать частоту запросов или временно не предоставлять данные. В таких случаях отдельные курсы или котировки могут быть недоступны.
 
 **Важно:** файл `.env` с личным API-ключом не следует добавлять в Git или публиковать на GitHub.
