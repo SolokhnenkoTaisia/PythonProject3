@@ -5,6 +5,10 @@ from typing import Any
 
 import pandas as pd
 
+from src.reports import spending_by_category
+from src.services import simple_search
+from src.utils import load_transactions
+
 from src.external_api import get_currency_rates, get_stock_prices
 from src.views import (
     get_card_summary,
@@ -53,3 +57,28 @@ def main(
         "currency_rates": currency_rates,
         "stock_prices": stock_prices,
     }
+
+if __name__ == "__main__":
+    transactions = load_transactions("data/operations.xlsx")
+
+    # Берём дату последней операции из файла.
+    latest_date = transactions["Дата операции"].max()
+    date_time = latest_date.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Главная страница приложения.
+    print("Главная страница:")
+    print(main(date_time, transactions))
+
+    # Поиск транзакций.
+    print("\nРезультаты поиска:")
+    print(simple_search("супермаркеты", transactions))
+
+    # Отчёт по расходам в категории.
+    print("\nОтчёт по категории:")
+    print(
+        spending_by_category(
+            transactions,
+            "Супермаркеты",
+            report_date=latest_date.to_pydatetime(),
+        )
+    )
